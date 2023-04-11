@@ -43,4 +43,12 @@ contract CBDC is ERC20 {
         interestRateBasisPoints = newInterest;
         emit UpdateInterestRate(oldInterestRate, newInterest);
     }
+
+    function increaseMoneySupply(
+        uint inflationAmount
+    ) external onlyGovernement {
+        uint oldMoneySupply = totalSupply();
+        _mint(msg.sender, inflationAmount);
+        emit IncreaseMoneySupply(oldMoneySupply, inflationAmount);
+    }
 }
