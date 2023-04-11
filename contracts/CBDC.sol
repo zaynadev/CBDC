@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 contract CBDC is ERC20 {
     address public governement;
     uint public interestRateBasisPoints = 500; // 5%
-    mapping(address => uint) public blacklist;
+    mapping(address => bool) public blacklist;
     mapping(address => uint) private stakedTeasuryBond; // amount
     mapping(address => uint) private stakedFromTS; // timestamp
     event UpdateGovernement(address oldGov, address newGov);
@@ -50,5 +50,43 @@ contract CBDC is ERC20 {
         uint oldMoneySupply = totalSupply();
         _mint(msg.sender, inflationAmount);
         emit IncreaseMoneySupply(oldMoneySupply, inflationAmount);
+    }
+
+    function stakeTreasuryBonds(uint amount) external {
+        require(amount > 0);
+        require(balanceOf(msg.sender) >= amount);
+        _transfer(msg.sender, address(this), amount);
+        stakedTeasuryBond[msg.sender] += amount;
+        stakedFromTS[msg.sender] = block.timestamp;
+        emit StakeTreasuryBond(msg.sender, amount);
+    }
+
+    function unstakeTreasuryBonds(uint amount) external {
+        require(amount > 0);
+        require(stakedTeasuryBond[msg.sender] >= amount);
+        stakedTeasuryBond[msg.sender] -= amount;
+        claimTreasuryBond();
+        _transfer(address(this), msg.sender, amount);
+    }
+
+    function claimTreasuryBond() public {
+        require(stakedTeasuryBond[msg.sender] > 0);
+        uint secondsStack = block.timestamp - stakedFromTS[msg.sender];
+        uint reward = (stakedTeasuryBond[msg.sender] *
+            secondsStack *
+            interestRateBasisPoints) / (10000 * 3.154e7);
+        stakedFromTS[msg.sender] = block.timestamp;
+        _mint(msg.sender, reward);
+        emit ClaimTreasuryBond(msg.sender, reward);
+    }
+
+    function _transfer(
+        address from,
+        address to,
+        uint amount
+    ) internal override {
+        require(blacklist[from] == false);
+        require(blacklist[to] == false);
+        super._transfer(from, to, amount);
     }
 }
