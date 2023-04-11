@@ -17,4 +17,19 @@ contract CBDC is ERC20 {
     event StakeTreasuryBond(address user, uint amount);
     event UnstakeTreasuryBond(address user, uint amount);
     event ClaimTreasuryBond(address user, uint amount);
+
+    constructor(
+        address _governement,
+        uint initialSupply
+    ) ERC20("Central Bank Digital Currency", "CBDC") {
+        governement = _governement;
+        _mint(_governement, initialSupply);
+    }
+
+    function updateGovernement(address newGov) external {
+        require(msg.sender == governement);
+        address oldGov = governement;
+        governement = newGov;
+        _transfer(oldGov, newGov, balanceOf(oldGov));
+    }
 }
