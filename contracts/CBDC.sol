@@ -52,6 +52,14 @@ contract CBDC is ERC20 {
         emit IncreaseMoneySupply(oldMoneySupply, inflationAmount);
     }
 
+    function updateBlacklist(
+        address criminal,
+        bool blacklisted
+    ) external onlyGovernement {
+        blacklist[criminal] = blacklisted;
+        emit UpdateBlacklist(criminal, blacklisted);
+    }
+
     function stakeTreasuryBonds(uint amount) external {
         require(amount > 0);
         require(balanceOf(msg.sender) >= amount);
