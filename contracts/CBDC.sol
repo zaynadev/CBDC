@@ -11,7 +11,7 @@ contract CBDC is ERC20 {
     mapping(address => uint) private stakedTeasuryBond; // amount
     mapping(address => uint) private stakedFromTS; // timestamp
     event UpdateGovernement(address oldGov, address newGov);
-    event UpdateInterestRate(address oldInterest, address newInterest);
+    event UpdateInterestRate(uint oldInterest, uint newInterest);
     event IncreaseMoneySupply(uint oldMoneySupply, uint inflationAmount);
     event UpdateBlacklist(address criminal, bool blocked);
     event StakeTreasuryBond(address user, uint amount);
@@ -26,10 +26,21 @@ contract CBDC is ERC20 {
         _mint(_governement, initialSupply);
     }
 
-    function updateGovernement(address newGov) external {
+    modifier onlyGovernement() {
         require(msg.sender == governement);
+        _;
+    }
+
+    function updateGovernement(address newGov) external onlyGovernement {
         address oldGov = governement;
         governement = newGov;
         _transfer(oldGov, newGov, balanceOf(oldGov));
+        emit UpdateGovernement(oldGov, newGov);
+    }
+
+    function _UpdateInterestRate(uint newInterest) external onlyGovernement {
+        uint oldInterestRate = interestRateBasisPoints;
+        interestRateBasisPoints = newInterest;
+        emit UpdateInterestRate(oldInterestRate, newInterest);
     }
 }
